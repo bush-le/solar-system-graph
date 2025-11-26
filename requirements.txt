@@ -1,0 +1,14 @@
+# Core GUI
+PyQt6
+
+# Graph Theory & Math
+networkx
+numpy
+scipy
+
+# Visualization
+matplotlib
+
+# Astronomy Data
+astroquery
+requests
