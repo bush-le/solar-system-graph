@@ -3,7 +3,7 @@
 # Project: solar-system-graph
 # Chức năng: Panel điều khiển bên trái (Chọn thuật toán, Nút bấm, Console log)
 
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QGroupBox, QComboBox, 
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QGroupBox, QComboBox, QHBoxLayout, 
                              QPushButton, QLabel, QCheckBox, QTextEdit, QFormLayout)
 from PyQt6.QtCore import pyqtSignal
 
@@ -13,7 +13,11 @@ class ControlPanel(QWidget):
     signal_run_algo = pyqtSignal(str, str, str) # (Tên thuật toán, Start Node, End Node)
     signal_graph_mode = pyqtSignal(bool)       # True = Có hướng, False = Vô hướng
     signal_clear_viz = pyqtSignal()            # Xóa màu vẽ cũ
-    signal_view_data = pyqtSignal()
+    
+    # --- CÁC SIGNAL MỚI (BẮT BUỘC PHẢI CÓ) ---
+    signal_view_data = pyqtSignal()            # Xem ma trận
+    signal_save_graph = pyqtSignal()           # Lưu file
+    signal_load_graph = pyqtSignal()           # Mở file
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -24,11 +28,25 @@ class ControlPanel(QWidget):
         grp_data = QGroupBox("1. System Data")
         layout_data = QVBoxLayout()
         
+        # Nút Load NASA
         self.btn_load = QPushButton("📡 Connect NASA API")
         self.btn_load.clicked.connect(self.signal_load_data.emit)
         self.btn_load.setStyleSheet("background-color: #2980b9; color: white; font-weight: bold; padding: 8px;")
         
+        # Hàng nút Save / Load
+        hbox_io = QHBoxLayout()
+        self.btn_save = QPushButton("💾 Save Graph")
+        self.btn_open = QPushButton("📂 Open File")
+        
+        # --- KẾT NỐI NÚT BẤM VỚI SIGNAL (QUAN TRỌNG) ---
+        self.btn_save.clicked.connect(self.signal_save_graph.emit)
+        self.btn_open.clicked.connect(self.signal_load_graph.emit)
+        
+        hbox_io.addWidget(self.btn_save)
+        hbox_io.addWidget(self.btn_open)
+        
         layout_data.addWidget(self.btn_load)
+        layout_data.addLayout(hbox_io)
         grp_data.setLayout(layout_data)
         
         # --- GROUP 2: CẤU HÌNH ĐỒ THỊ ---
@@ -41,12 +59,11 @@ class ControlPanel(QWidget):
         # Nút Mới: Xem dữ liệu
         self.btn_view_data = QPushButton("📊 View Matrices & Lists")
         self.btn_view_data.setStyleSheet("background-color: #8e44ad; color: white;")
-        # Chúng ta cần thêm signal cho nút này, nhưng để đơn giản 
-        # ta sẽ connect trực tiếp trong main_window sau, 
-        # hoặc khai báo signal mới ở đầu class.
+        # Kết nối signal cho nút View Data
+        self.btn_view_data.clicked.connect(self.signal_view_data.emit)
         
         layout_config.addWidget(self.chk_directed)
-        layout_config.addWidget(self.btn_view_data) # <--- Thêm vào layout
+        layout_config.addWidget(self.btn_view_data)
         grp_config.setLayout(layout_config)
 
         # --- GROUP 3: THUẬT TOÁN ---
@@ -61,7 +78,9 @@ class ControlPanel(QWidget):
             "DFS (Depth-First Search)",
             "Dijkstra (Shortest Path)",
             "MST (Prim Algorithm)",
-            "MST (Kruskal Algorithm)"
+            "MST (Kruskal Algorithm)",
+            "Max Flow (Ford-Fulkerson)",
+            "Eulerian Circuit"  # <--- ĐÃ THÊM MỤC NÀY ĐỂ CHẠY FILE EULERIAN.PY
         ])
         
         # Chọn điểm đầu - cuối
@@ -119,7 +138,6 @@ class ControlPanel(QWidget):
     def log(self, message):
         """Ghi log ra màn hình"""
         self.txt_log.append(f">> {message}")
-        # Tự động cuộn xuống dưới cùng
         self.txt_log.verticalScrollBar().setValue(self.txt_log.verticalScrollBar().maximum())
 
     def _on_run_clicked(self):
